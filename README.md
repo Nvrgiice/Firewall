@@ -33,6 +33,64 @@ Une fois branchée sur le bon réseau, ma machine aurait dû recevoir une adress
 
 ![Erreur DHCP](images/pb1.png)
 
+### Étape C : Routage
+J'avais désormais une adresse IP fonctionnelle et je pouvais parler à mon pare-feu en local. Pourtant, impossible d'accéder au reste du monde ou de pinger Internet. Mon terminal me renvoyait systématiquement l'erreur : ping: connect: Le réseau n'est pas accessible.
+
+Ma réflexion : Avoir une IP, c'est bien pour parler à ses voisins en local. Mais pour aller sur Internet, la machine doit connaître la porte de sortie (la passerelle) et avoir un serveur DNS pour traduire les noms de domaine.
+
+Ma solution : J'ai ajouté une route par défaut pointant vers pfSense et j'ai configuré le résolveur DNS directement dans le terminal.
+
+![Debogage](images/debug2.png)
+
+Bash
+# Ajout de la passerelle par défaut
+sudo ip route add default via 192.168.1.1
+# Ajout du serveur DNS
+echo "nameserver 192.168.1.1" | sudo tee /etc/resolv.conf
+Après l'application de ces deux commandes, le routage s'est débloqué instantanément et mon premier ping vers l'extérieur a réussi.
+
+### Étape D : Le blocage du navigateur (HSTS)
+Le réseau était fonctionnel, mais Firefox refusait de m'afficher l'interface d'administration de pfSense, indiquant un risque de sécurité (Unable to connect).
+
+Le diagnostic : Firefox (via le mécanisme de sécurité HSTS et son cache) forçait la connexion en HTTPS (port 443), alors que mon pare-feu m'attendait en HTTP simple (port 80).
+
+La solution : L'utilisation d'une session de navigation privée m'a permis d'ignorer le cache du navigateur et de me connecter sans encombre avec les identifiants d'usine.
+
+![Acces a pfsense sur navigateur Kali](images/navigation.png)
+![Dashboard](images/dashboard.png)
+
+3. Comprendre le filtrage (Firewall Rules)
+Pour valider mon objectif et comprendre comment le firewall agit concrètement sur les flux, j'ai créé ma première règle de sécurité (Stateful Firewall).
+
+Mon objectif : Bloquer le Ping (ICMP) spécifiquement vers le serveur DNS de Google (8.8.8.8), mais laisser tout le reste du trafic fonctionner normalement.
+
+Le mécanisme (Ordonnancement Top-Down) : Dans pfSense, les règles sont lues de haut en bas. Dès qu'un paquet correspond, l'action est appliquée. J'ai donc créé une règle d'interdiction (Block / ICMP / Destination 8.8.8.8) que j'ai placée tout en haut de ma liste sur l'interface LAN pour qu'elle soit lue en priorité absolue.
+
+![Règles](images/règles.png)
+
+Preuve de Concept (Le Test)
+Pour vérifier que ma règle fait bien son travail de manière chirurgicale, j'ai lancé deux pings depuis ma machine Kali :
+
+Ping vers 8.8.8.8 (Google) ➔ 100% packet loss. Le pare-feu intercepte immédiatement les paquets et les détruit.
+
+Ping vers 1.1.1.1 (Cloudflare) ➔ 0% packet loss. La connexion passe sans problème, prouvant que je n'ai pas cassé le reste du réseau.
+
+![Debogage](images/testregles.png)
+
+## Bilan du Projet
+Ce laboratoire a été une réussite totale et m'a permis de valider concrètement mes compétences :
+
+Démystifier le pare-feu : C'est un routeur logique qui inspecte, bloque ou autorise les paquets selon des règles strictes.
+
+Le dépannage (Troubleshooting) : J'ai appris à ne pas paniquer devant des erreurs (Network unreachable, échecs DHCP) et à utiliser les commandes réseaux de base (ip, route, ping) pour isoler et résoudre les problèmes couche par couche.
+
+## Auteur
+
+Nargice Boudlal
+
+Étudiante ingénieure à l'ESEO, souhaitant se spécialiser dans les infrastructures, systèmes, réseaux et cybersécurité.
+
+Ce laboratoire a été réalisé dans une démarche personnelle afin de développer mes compétences pratiques en administration réseau et en sécurité des systèmes d'information.
 
 
 
