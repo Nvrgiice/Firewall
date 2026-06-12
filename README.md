@@ -5,7 +5,7 @@ L'objectif de ce projet est simple : **savoir mettre en place un pare-feu (firew
 
 ## 1. L'Architecture du Laboratoire
 
-Pour expérimenter sans casser mon propre réseau physique, j'ai tout virtualisé sur VirtualBox en créant 2 VM :
+Pour expérimenter sans casser mon propre réseau physique, j'ai tout virtualisé sur VirtualBox en créant deux VM :
 
 * **Le Pare-feu (pfSense) :** C'est le cœur du projet. Il fait office de routeur et de garde-frontière avec deux cartes réseau :
   * **WAN :** La patte connectée à Internet (via le NAT de VirtualBox, IP `10.0.2.15`).
