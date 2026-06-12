@@ -50,12 +50,11 @@ Le diagnostic : Firefox (via le mécanisme de sécurité HSTS et son cache) for�
 La solution : L'utilisation d'une session de navigation privée m'a permis d'ignorer le cache du navigateur et de me connecter sans encombre avec les identifiants d'usine.
 
 ![Acces a pfsense sur navigateur Kali](images/navigation.png)
-![Dashboard](images/dashboard.png)
 
-3. Comprendre le filtrage (Firewall Rules)
 Pour valider mon objectif et comprendre comment le firewall agit concrètement sur les flux, j'ai créé ma première règle de sécurité (Stateful Firewall).
 
 Mon objectif : Bloquer le Ping (ICMP) spécifiquement vers le serveur DNS de Google (8.8.8.8), mais laisser tout le reste du trafic fonctionner normalement.
+![Dashboard](images/dashboard.png)
 
 Dans pfSense, les règles sont lues de haut en bas. Dès qu'un paquet correspond, l'action est appliquée. J'ai donc créé une règle d'interdiction (Block / ICMP / Destination 8.8.8.8) que j'ai placée tout en haut de ma liste sur l'interface LAN pour qu'elle soit lue en priorité absolue.
 
