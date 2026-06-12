@@ -1,36 +1,65 @@
-# 🛡️ Mon Labo de Cybersécurité : pfSense & Kali Linux
+# 🛡️ Carnet de Bord : Mon Labo de Cybersécurité
 
-## 🎯 Pourquoi ce projet ?
-J'ai voulu créer un petit "bac à sable" sécurisé sur mon ordi pour apprendre comment fonctionne la sécurité réseau. Le but, c'était de créer un environnement où je contrôle tout : qui rentre, qui sort, et surtout, comment on protège une machine (ma Kali) derrière un pare-feu (pfSense).
-
-## 🏗️ Comment j'ai installé mon labo
-J'ai utilisé VirtualBox pour simuler un petit réseau privé, totalement isolé de mon vrai Internet.
-
-* **Le Pare-feu (pfSense) :** C'est le chef de la sécurité. Il a deux "pattes" :
-  * **WAN :** Il se connecte à Internet pour aller chercher les infos.
-  * **LAN :** Il gère mon réseau privé (que j'ai appelé `monLab`). C'est lui qui distribue les accès aux autres machines.
-* **La machine cliente (Kali Linux) :** C'est ma machine d'attaque. Elle est "enfermée" dans mon réseau `monLab`. Elle ne peut pas sortir sur Internet si pfSense ne lui donne pas la permission
-
-![Architecture de mon labo](images/nom_de_ta_capture_pfsense_console.png)
+Ce projet retrace la construction de mon environnement de test sécurisé. Mon objectif était de comprendre comment un pare-feu (pfSense) protège et contrôle une machine cliente (Kali Linux) dans un environnement isolé.
 
 ---
 
-## 🛠️ Mes galères et comment je les ai résolues
-Le réseau, c'est parfois capricieux ! Voici les problèmes que j'ai rencontrés et ce que j'ai appris en les réparant.
+## 🏗️ Étape 1 : L'Infrastructure de Base
+J'ai configuré deux machines virtuelles sur VirtualBox pour créer mon laboratoire :
 
-### 1. Le problème de "branchement" (vSwitch)
-Au début, ma Kali ne trouvait pas pfSense. Elle cherchait partout, mais personne ne lui répondait.
-* **Le diagnostic :** En tapant `ip a`, j'ai vu que ma Kali n'avait pas d'adresse IP dans mon réseau. Elle n'était pas branchée sur le bon "switch virtuel".
-* **La solution :** J'ai dû modifier les paramètres réseau dans VirtualBox pour brancher ma Kali sur le réseau `monLab` au lieu du réseau par défaut.
+1.  **pfSense (Le pare-feu) :** Deux cartes réseau. Une pour le Web (WAN) et une pour mon réseau privé (LAN).
+2.  **Kali Linux (Le client) :** Isolée dans mon réseau privé `monLab`.
 
-![Erreur de connexion](images/nom_de_ta_capture_kali_erreur.png)
+![Architecture de mon labo](images/Config-LAN.png)
 
-### 2. Le "Plan B" : Forcer la connexion
-Le serveur automatique (DHCP) de pfSense faisait un peu la tête. Alors, au lieu de rester bloquée, j'ai configuré l'adresse IP de ma Kali à la main (en "statique"). C'est comme si j'avais donné un numéro de bureau fixe à ma machine pour qu'elle soit sûre d'être trouvée.
+---
 
-```bash
-# Je donne manuellement une adresse IP à ma carte réseau
-sudo ip addr add 192.168.1.50/24 dev eth0
+## 🛠️ Étape 2 : Le parcours du combattant (Debug & Résultats)
 
-# J'allume la carte pour qu'elle commence à travailler
-sudo ip link set eth0 up
+### Bug n°1 : La machine cliente était "à la rue"
+* **Le problème :** Ma Kali n'avait pas d'adresse IP correcte. En tapant `ip a`, elle affichait une IP `10.0.2.15` (réseau NAT par défaut), preuve qu'elle était branchée à l'extérieur.
+* **Le debug :** J'ai compris qu'il fallait "débrancher" le câble virtuel de la Kali du mode NAT pour le brancher sur mon switch interne `monLab`.
+* **Résultat :** Après le changement dans VirtualBox et un `sudo systemctl restart NetworkManager`, elle était enfin dans mon réseau.
+
+![Erreur de connexion](images/debug.png)
+
+### Bug n°2 : Le DHCP capricieux
+* **Le problème :** Même branchée au bon endroit, la Kali ne recevait pas d'IP via le protocole automatique (DHCP). Les requêtes `DHCPDISCOVER` tournaient dans le vide.
+* **Le debug :** Plutôt que de perdre du temps à chercher pourquoi le serveur DHCP était têtu, j'ai utilisé une approche de "force brute" en configurant tout manuellement (IP Statique).
+* **Résultat :** J'ai utilisé `sudo ip addr add 192.168.1.50/24 dev eth0`. J'ai enfin eu une IP sur le bon segment !
+
+![Configuration IP manuelle](images/etape1.png)
+
+### Bug n°3 : Le "mur" invisible du routage
+* **Le problème :** J'avais une IP, mais toujours pas d'Internet. La commande `ping 8.8.8.8` répondait "Network is unreachable".
+* **Le debug :** Ma machine savait qui elle était, mais pas par quelle porte sortir pour rejoindre le monde. J'ai ajouté une route par défaut et défini le serveur DNS.
+* **Résultat :** Avec `sudo ip route add default via 192.168.1.1`, j'ai enfin trouvé la porte de sortie !
+
+![Problème de routage](images/pb1.png)
+
+### Bug n°4 : Le piège de la sécurité Firefox (HSTS)
+* **Le problème :** Impossible d'afficher l'interface web de pfSense. Erreur "Unable to connect".
+* **Le debug :** Mon navigateur Firefox, trop malin, forçait le HTTPS alors que mon pfSense attendait du HTTP simple.
+* **Résultat :** Passage en mode "Navigation privée". Le navigateur a oublié ses restrictions, et hop, l'interface verte de pfSense est apparue.
+
+![Piège HTTPS](images/navigation.png)
+
+---
+
+## 🏁 Résultat Final
+Après avoir franchi ces étapes, mon labo est parfaitement fonctionnel :
+
+1.  **Isolation :** Ma Kali est bien dans ma zone sécurisée.
+2.  **Routage :** pfSense traduit correctement les paquets (NAT) pour permettre à Kali de naviguer.
+3.  **Administration :** J'ai un accès complet au WebGUI de pfSense via `http://192.168.1.1`.
+
+![Tableau de bord final](images/dashboard.png)
+
+---
+
+## 🔒 Prochaine étape : La Sécurité "Chirurgicale"
+Maintenant que tout est stable, je vais appliquer mes premières règles de pare-feu :
+* **Bloquer le Ping :** Empêcher Kali d'envoyer des "coucous" (ICMP) vers des cibles précises.
+* **Valider le blocage :** Utiliser le terminal Kali pour prouver que les paquets sont bien détruits par pfSense.
+
+*À suivre...*
