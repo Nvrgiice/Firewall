@@ -57,12 +57,12 @@ Pour valider mon objectif et comprendre comment le firewall agit concrètement s
 
 Mon objectif : Bloquer le Ping (ICMP) spécifiquement vers le serveur DNS de Google (8.8.8.8), mais laisser tout le reste du trafic fonctionner normalement.
 
-Le mécanisme (Ordonnancement Top-Down) : Dans pfSense, les règles sont lues de haut en bas. Dès qu'un paquet correspond, l'action est appliquée. J'ai donc créé une règle d'interdiction (Block / ICMP / Destination 8.8.8.8) que j'ai placée tout en haut de ma liste sur l'interface LAN pour qu'elle soit lue en priorité absolue.
+Dans pfSense, les règles sont lues de haut en bas. Dès qu'un paquet correspond, l'action est appliquée. J'ai donc créé une règle d'interdiction (Block / ICMP / Destination 8.8.8.8) que j'ai placée tout en haut de ma liste sur l'interface LAN pour qu'elle soit lue en priorité absolue.
 
 ![Règles](images/règles.png)
 
 Preuve de Concept (Le Test)
-Pour vérifier que ma règle fait bien son travail de manière chirurgicale, j'ai lancé deux pings depuis ma machine Kali :
+Pour vérifier que ma règle fait bien son travail, j'ai lancé deux pings depuis ma machine Kali :
 
 Ping vers 8.8.8.8 (Google) ➔ 100% packet loss. Le pare-feu intercepte immédiatement les paquets et les détruit.
 
