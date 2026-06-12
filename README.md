@@ -42,13 +42,6 @@ Ma solution : J'ai ajouté une route par défaut pointant vers pfSense et j'ai c
 
 ![Debogage](images/debug2.png)
 
-Bash
-# Ajout de la passerelle par défaut
-sudo ip route add default via 192.168.1.1
-# Ajout du serveur DNS
-echo "nameserver 192.168.1.1" | sudo tee /etc/resolv.conf
-Après l'application de ces deux commandes, le routage s'est débloqué instantanément et mon premier ping vers l'extérieur a réussi.
-
 ### Étape D : Le blocage du navigateur (HSTS)
 Le réseau était fonctionnel, mais Firefox refusait de m'afficher l'interface d'administration de pfSense, indiquant un risque de sécurité (Unable to connect).
 
