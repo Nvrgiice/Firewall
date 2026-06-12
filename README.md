@@ -1,4 +1,4 @@
-# 🛡️ Projet : Mon Labo de Cybersécurité (pfSense & Kali Linux)
+# 🛡️ Projet : Firewall (pfSense & Kali Linux)
 
 L'objectif de ce projet est simple : **savoir mettre en place un pare-feu (firewall) de A à Z et comprendre concrètement comment ça fonctionne.**
 
